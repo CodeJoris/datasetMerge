@@ -1,10 +1,13 @@
 import os, glob
 import pandas as pd
 import concurrent.futures
-from dataset_loader import DatasetLoader
+from pathlib import Path
+import shutil
 from pathlib import Path
 
 '''
+fs = 100Hz
+
 Acc_X : in the vertical direction (w/gravity)
 Acc_Y : in the medio-lateral direction (w/gravity)
 Acc_Z : in the anterior-posterior direction (w/gravity)
@@ -50,7 +53,10 @@ def main(data_path: Path = DATA_PATH, output_path: Path = OUTPUT_PATH) -> None:
     if all_subjects_data:
         print("Concatenating final dataset...")
         final_df = pd.concat(all_subjects_data, ignore_index=True)
-        
+
+        time_series = final_df.groupby(['sid', 'trial_no'])['PacketCounter'].transform(lambda x: (x - x.min()) * 10)
+        final_df.insert(0, 'time_ms', time_series)
+
         # Ensure output directory exists before saving
         output_path.mkdir(parents=True, exist_ok=True)
         
@@ -128,16 +134,17 @@ def process_sensor_file(path: Path) -> pd.DataFrame:
     removes the "SampleTimeFine" column, renames remaining columns with 
     the sensor location prefix, and sets "PacketCounter" as the index.
 
-    Parameters:
+    Parameters
     ---
     path: Path
         The file path to the sensor's CSV file.
 
-    Returns: pd.DataFrame
+    Returns
     ---
+    pd.DataFrame
         A cleaned dataframe indexed by PacketCounter, ready for merging.
     '''
-    df = pd.read_csv(path, engine='pyarrow')
+    df = pd.read_csv(path, engine='python', on_bad_lines='skip')
     loc = get_location(path.name)
 
     df.columns = df.columns.str.strip()
@@ -243,7 +250,11 @@ def get_filepaths(data_path: Path) -> dict[int, list[Path]]:
     return filepaths
 
 def append_missing_subjects(missing_sids: list[int], data_path: Path, output_file: Path) -> None:
-    '''Processes specific subjects and appends them to an existing CSV file.'''
+    '''Processes specific subjects and appends them to an existing CSV file safely.'''
+    
+    # 1. Read ONLY the header of the existing file to get the exact column layout
+    existing_columns = pd.read_csv(output_file, nrows=0).columns
+    
     for sid in missing_sids:
         print(f"Processing missing Subject {sid}...")
         subject_dir = data_path / str(sid)
@@ -253,20 +264,52 @@ def append_missing_subjects(missing_sids: list[int], data_path: Path, output_fil
             print(f"No files found for Subject {sid}.")
             continue
             
-        # Call the existing process_subject function
         subject_df = process_subject(sid, paths)
         
         if not subject_df.empty:
             print(f"Appending Subject {sid} to {output_file.name}...")
-            # mode='a' appends to the file. 
-            # header=False prevents injecting a new row of column names into the middle of your dataset.
+            
+            # 2. Reindex the dataframe to match the target CSV exactly.
+            # This fills missing columns with NaN (empty strings in CSV) and drops extra columns.
+            subject_df = subject_df.reindex(columns=existing_columns)
+            
+            # 3. Now it is safe to append
             subject_df.to_csv(output_file, mode='a', index=False, header=False)
             print(f"Subject {sid} successfully added!")
 
+def rename_csv_column(input_file: Path, output_file: Path, old_name: str, new_name: str) -> None:
+    '''
+    Streams a massive CSV file to a new file, renaming a specific column 
+    in the header while keeping memory usage near zero.
+    '''
+    with open(input_file, 'r') as infile, open(output_file, 'w') as outfile:
+        # 1. Read just the first line (the header)
+        header_line = infile.readline().strip()
+        
+        # 2. Split it safely to prevent renaming partial matches 
+        # (e.g., we don't want changing "Acc_X" to affect "left_thigh_Acc_X")
+        columns = header_line.split(',')
+        
+        # 3. Find the exact column and rename it
+        updated_columns = [new_name if col == old_name else col for col in columns]
+        
+        # 4. Write the new header to the output file
+        outfile.write(','.join(updated_columns) + '\n')
+        
+        # 5. Blast the rest of the experimental data directly to the new file
+        # This streams in chunks at the I/O level, bypassing Python's line parser
+        shutil.copyfileobj(infile, outfile)
+        
+    print(f"Successfully renamed '{old_name}' to '{new_name}' in {output_file.name}")
+
 if __name__ == "__main__":
     # Specify the missing subject ID (or a list of them if multiple failed)
-    missing_subjects = [2]
+    missing_subjects = []
     target_csv = OUTPUT_PATH / "luo.csv"
+
+    # Example usage:
+    input_path = target_csv
+    output_path = OUTPUT_PATH / 'luo_renamed.csv'
 
     if len(missing_subjects) == 0:
         main()
