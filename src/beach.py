@@ -30,7 +30,6 @@ def process_subject(file_path: Path) -> pd.DataFrame:
     with open(file_path, 'rb') as pkl_file:
         data = pd.read_pickle(pkl_file)
         
-    # Define the target sensor keys explicitly 
     sensors = [
         'left_wrist', 'right_wrist', 
         'left_upper_leg', 'right_upper_leg', 
@@ -42,32 +41,44 @@ def process_subject(file_path: Path) -> pd.DataFrame:
     
     for sensor in sensors:
         if sensor in data and isinstance(data[sensor], pd.DataFrame):
-            # Extract the sensor df
             sensor_df = data[sensor].copy()
             
-            # Rename x, y, z columns to prevent collisions during the merge
+            sensor_df['DateTime'] = sensor_df['DateTime'].dt.round('10ms')
+            sensor_df = sensor_df.groupby('DateTime', as_index=False).mean()
+            
             sensor_df = sensor_df.rename(columns={
-                'x': f'{sensor}_Accx',
-                'y': f'{sensor}_Accy',
-                'z': f'{sensor}_Accz'
+                'x': f'{sensor}_Acc_x',
+                'y': f'{sensor}_Acc_y',
+                'z': f'{sensor}_Acc_z'
             })
             
-            # Sequentially outer-join the sensors on their DateTime
             if merged_df is None:
                 merged_df = sensor_df
             else:
                 merged_df = pd.merge(merged_df, sensor_df, on='DateTime', how='outer')
     
     if merged_df is not None:
-        # Sort chronologically to clean up the outer join
         merged_df = merged_df.sort_values('DateTime').reset_index(drop=True)
         
-        # Rename DateTime to time to match the exact requirements
-        merged_df = merged_df.rename(columns={'DateTime': 'time'})
+        # Isolate the acceleration columns for targeted interpolation
+        accel_cols = [c for c in merged_df.columns if c != 'DateTime']
         
-        # Append metadata
-        merged_df['subject_id'] = subject_id
-        merged_df['surface'] = get_surface(merged_df['subject_id'])
+        # TARGETED TRANSFORMATION: Interpolate internal data gaps without extending edge padding
+        merged_df[accel_cols] = merged_df[accel_cols].interpolate(method='linear', limit_area='inside')
+        
+        # OPTIONAL TRANSFORMATION: Drop terminal rows where no sensors were active
+        merged_df = merged_df.dropna(subset=accel_cols, how='any')
+        
+        merged_df = merged_df.rename(columns={'DateTime': 'time_ms'})
+        min_time = merged_df['time_ms'].min()
+        merged_df['time_ms'] = (merged_df['time_ms'] - min_time).dt.total_seconds() * 1000
+        merged_df['time_ms'] = merged_df['time_ms'].astype(int)
+        
+        merged_df['sid'] = subject_id
+        merged_df['surface'] = get_surface(merged_df['sid'])
+        
+        metadata_cols = ['time_ms', 'sid', 'surface']
+        merged_df = merged_df[metadata_cols + accel_cols]
         
     return merged_df
 
@@ -82,7 +93,7 @@ def main(file_paths: list[Path], output_path: Path):
     '''    
     # Ensure the output directory exists
     output_path.mkdir(parents=True, exist_ok=True)
-    out_file = output_path / 'merged_treadmill_data.csv'
+    out_file = output_path / 'beach.csv'
     
     dfs = []
     
@@ -100,7 +111,7 @@ def main(file_paths: list[Path], output_path: Path):
         final_df = pd.concat(dfs, ignore_index=True)
         
         # Reorder columns: time, subject_id, surface, [sensor data...]
-        metadata_cols = ['time', 'subject_id', 'surface']
+        metadata_cols = ['time_ms', 'sid', 'surface']
         accel_cols = [c for c in final_df.columns if c not in metadata_cols]
         final_df = final_df[metadata_cols + accel_cols]
         
