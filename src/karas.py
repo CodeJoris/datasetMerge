@@ -3,6 +3,8 @@ import numpy as np
 from pathlib import Path
 import concurrent.futures
 
+g = 9.80665  # Acceleration due to gravity in m/s^2
+
 def get_id(file_path: Path) -> str:
     '''
     Takes in the file path and returns the file name 
@@ -37,16 +39,19 @@ def process_subject(file_name: Path) -> pd.DataFrame:
     df = pd.read_csv(file_name)
     
     # Extract ID and generate surface mappings
-    df['subject_id'] = get_id(file_name)
+    df['sid'] = get_id(file_name)
     df['surface'] = get_surface(df['activity'])
     
     # Drop original activity column and rename time column
     df = df.drop(columns=['activity'])
-    df = df.rename(columns={'time_s': 'time'})
+    df = df.rename(columns={'time_s': 'time_ms'})
+    df['time_ms'] = (df['time_ms'] * 1000).astype(int)  # Convert seconds to milliseconds
+    
     
     # Reorder columns to place time, subject_id, and surface first
-    accel_cols = [col for col in df.columns if col not in ['time', 'subject_id', 'surface']]
-    ordered_cols = ['time', 'subject_id', 'surface'] + accel_cols
+    accel_cols = [col for col in df.columns if col not in ['time_ms', 'sid', 'surface']]
+    df[accel_cols] = df[accel_cols] * g  # Convert acceleration from g to m/s^2
+    ordered_cols = ['time_ms', 'sid', 'surface'] + accel_cols
     
     return df[ordered_cols]
 
@@ -57,7 +62,7 @@ def main(file_paths: list[Path], output_path: Path):
     to speed up the process.
     
     The output csv should have the following columns:
-    time, subject_id, surface, all acceleration data
+    time_ms, subject_id, surface, all acceleration data
     '''    
     dataframes = []
     # Use multiprocessing to parse files concurrently[cite: 1]
@@ -73,7 +78,7 @@ def main(file_paths: list[Path], output_path: Path):
         output_path.mkdir(parents=True, exist_ok=True)
         
         # Write to csv[cite: 1]
-        out_file = output_path / 'karas1.csv'
+        out_file = output_path / 'karas.csv'
         merged_df.to_csv(out_file, index=False)
         print(f"Data successfully merged and saved to {out_file}")
 
