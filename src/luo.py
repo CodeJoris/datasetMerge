@@ -3,7 +3,6 @@ import pandas as pd
 import concurrent.futures
 from pathlib import Path
 import shutil
-from pathlib import Path
 
 '''
 fs = 100Hz
@@ -92,8 +91,19 @@ def process_subject(sid: int, paths: list[Path]) -> pd.DataFrame:
         dfs_to_concat = [process_sensor_file(path) for path in trial_paths]
 
         if dfs_to_concat:
-            # 3. Merge the trial sensors
-            merged_df = pd.concat(dfs_to_concat, axis=1, join="inner").reset_index()
+            # 3. Merge the trial sensors with an outer join to retain all recorded packets
+            merged_df = pd.concat(dfs_to_concat, axis=1, join="outer")
+            
+            # De-fragment IMMEDIATELY after concatenation before doing anything else
+            merged_df = merged_df.copy()
+
+            # Enforce linear time increase by reindexing over the full packet range
+            min_packet = merged_df.index.min()
+            max_packet = merged_df.index.max()
+            full_packet_range = pd.Index(range(min_packet, max_packet + 1), name="PacketCounter")
+            
+            # This fills missing packets in the sequence with NaNs
+            merged_df = merged_df.reindex(full_packet_range).reset_index()
 
             # 4. Append metadata
             merged_df.insert(1, "sid", sid)
