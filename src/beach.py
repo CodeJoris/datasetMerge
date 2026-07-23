@@ -57,21 +57,31 @@ def process_subject(file_path: Path) -> pd.DataFrame:
             else:
                 merged_df = pd.merge(merged_df, sensor_df, on='DateTime', how='outer')
     
-    if merged_df is not None:
+    if merged_df is not None and not merged_df.empty:
         merged_df = merged_df.sort_values('DateTime').reset_index(drop=True)
         
-        # Isolate the acceleration columns for targeted interpolation
+        # --- NEW LOGIC: Enforce linear time increase and fill missing with NaNs ---
+        min_time = merged_df['DateTime'].min()
+        max_time = merged_df['DateTime'].max()
+        
+        # Create a uniform time index with strict 10ms steps (linear time increase)
+        uniform_time_idx = pd.date_range(start=min_time, end=max_time, freq='10ms')
+        
+        # Reindex the dataframe to the uniform timeline. 
+        # Missing packets naturally become NaNs here.
+        merged_df = merged_df.set_index('DateTime').reindex(uniform_time_idx)
+        
+        # Restore DateTime column
+        merged_df.index.name = 'DateTime'
+        merged_df = merged_df.reset_index()
+        # --------------------------------------------------------------------------
+        
         accel_cols = [c for c in merged_df.columns if c != 'DateTime']
         
-        # TARGETED TRANSFORMATION: Interpolate internal data gaps without extending edge padding
-        merged_df[accel_cols] = merged_df[accel_cols].interpolate(method='linear', limit_area='inside')
-        
-        # OPTIONAL TRANSFORMATION: Drop terminal rows where no sensors were active
-        merged_df = merged_df.dropna(subset=accel_cols, how='any')
-        
+        # Convert DateTime to relative time_ms
         merged_df = merged_df.rename(columns={'DateTime': 'time_ms'})
-        min_time = merged_df['time_ms'].min()
-        merged_df['time_ms'] = (merged_df['time_ms'] - min_time).dt.total_seconds() * 1000
+        min_time_val = merged_df['time_ms'].min()
+        merged_df['time_ms'] = (merged_df['time_ms'] - min_time_val).dt.total_seconds() * 1000
         merged_df['time_ms'] = merged_df['time_ms'].astype(int)
         
         merged_df['sid'] = subject_id
