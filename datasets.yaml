@@ -1,0 +1,57 @@
+datasets:
+  luo:
+    link: "https://springernature.figshare.com/collections/A_database_of_human_gait_performance_on_irregular_and_uneven_surfaces_collected_by_wearable_sensors/4892463"
+    path: "datasets/luo"
+    delimiter: ","
+    coupling_column: "PacketCounter"
+    fs: 100
+    surface_labeling: "file_name"
+    metrics: ['acc', 'freeacc', 'gyr', 'mag', 'VelInc', 'oriinc (q0-q3)', 'roll', 'pitch', 'yaw', 'latitude', 'longitude', 'altitude', 'vel']
+    locations: ['trunk', 'right_wrist', 'right_thigh', 'left_thigh', 'right_shank', 'left_shank']
+    acc_unit: "g"
+    gyro_unit: "rad/s"
+    # Grouping these makes iteration in Python a single loop
+    surface_mappings:
+      calibration: [1, 2, 3]
+      flat_even: [4, 5, 6, 7, 8, 9]
+      cobble_stone: [10, 11, 12, 13, 14, 15]
+      stairs_up: [16, 18, 20, 22, 24, 26]
+      stairs_down: [17, 19, 21, 23, 25, 27]
+      slope_up: [28, 30, 32, 34, 36, 38]
+      slope_down: [29, 31, 33, 35, 37, 39]
+      bank_left: [40, 42, 44, 46, 48, 50]
+      bank_right: [41, 43, 45, 47, 49, 51]
+      grass: [52, 53, 54, 55, 56, 57]
+    sensor_labeling: "file_name"
+    sensor_mappings:
+      trunk: "CC.txt"
+      wrist: "95.txt"
+      right_thigh: "93.txt"
+      left_thigh: "8B.txt"
+      right_shank: "9B.txt"
+      left_shank: "B6.txt"
+  karas:
+    locations: ['left_hip', 'left_wrist', 'right_ankle', 'left_ankle']
+    metrics: ['acc']
+    acc_unit: "g"
+    link: "https://physionet.org/content/accelerometry-walk-climb-drive/1.0.0/"
+    fs: 100
+  bruno:
+    link: "https://archive.ics.uci.edu/dataset/283/dataset+for+adl+recognition+with+wrist+worn+accelerometer"
+    locations: ['right_wrist']
+    metrics: ['acc']
+    fs: 32
+  beach:
+    locations: ['right_foot', 'left_wrist', 'left_foot', 'left_lower', 'right_wrist', 'right_lower', 'left_upper', 'right_upper']
+    metrics: ['acc', 'gyr', 'mag']
+    acc_unit: "g"
+    link: "https://data.mendeley.com/datasets/5rrxw7y5bj/1"
+    fs: 100
+  hugadb:
+    fs: 58.8
+    metrics: ['acc', 'gyr', 'emg']
+    locations: ['right_foot', 'right_thigh', 'left_foot', 'right_shank', 'left_shank', 'left_thigh']
+    acc_unit: "int16"
+    gyro_unit: "int16"
+    acc_conversion: "2g/32768"
+    gyro_conversion: "2000*pi/32768*180"
