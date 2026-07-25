@@ -3,6 +3,8 @@ import numpy as np
 from pathlib import Path
 import concurrent.futures
 
+G_TO_MS2 = 9.80665  # Conversion factor from g to m/s^2
+
 def get_id(file_path: Path) -> str:
     '''
     Takes in the file path and returns the file name 
@@ -76,8 +78,8 @@ def process_subject(file_path: Path) -> pd.DataFrame:
         merged_df.index.name = 'datetime'
         merged_df = merged_df.reset_index()
         # --------------------------------------------------------------------------
-        
-        accel_cols = [c for c in merged_df.columns if c != 'datetime']
+        # Convert to m/s^2 if the original data is in g
+        accel_cols = [c for c in merged_df.columns if c != 'datetime'] 
         
         # Convert datetime to relative time_ms
         merged_df = merged_df.rename(columns={'datetime': 'time_ms'})
@@ -90,6 +92,7 @@ def process_subject(file_path: Path) -> pd.DataFrame:
         
         metadata_cols = ['time_ms', 'sid', 'surface']
         merged_df = merged_df[metadata_cols + accel_cols]
+        merged_df[accel_cols] = merged_df[accel_cols].apply(pd.to_numeric, errors='coerce') * G_TO_MS2
         merged_df.columns = [str(column).lower() for column in merged_df.columns]
         
     return merged_df
