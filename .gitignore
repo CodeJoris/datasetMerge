@@ -3,3 +3,7 @@ outputs/
 .venv/
 notebooks/
 dataloading/
+tests/__pycache__/
+tests/column_test/
+tests/nan_test/
+tests/linearity_test/
