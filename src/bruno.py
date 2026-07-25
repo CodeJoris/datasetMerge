@@ -1,3 +1,4 @@
+from importlib.resources import path
 import os
 import pandas as pd
 from pathlib import Path
@@ -114,9 +115,9 @@ def format_dataframe(df, surface, sid, trial_no):
         'sid', 
         'surface', 
         'trial_no', 
-        'right_wrist_Acc_x', 
-        'right_wrist_Acc_y', 
-        'right_wrist_Acc_z'
+        'right_wrist_acc_x', 
+        'right_wrist_acc_y', 
+        'right_wrist_acc_z'
     ]
     return df
 
@@ -149,7 +150,7 @@ def process_single_file(file_path, filename, sid_map, next_sid, trial_no):
         
     try:
         # Read data; assuming space or comma-separated values with no header
-        df = pd.read_csv(file_path, sep=r'\s+|,', header=None, engine='python')
+        df = pd.read_csv(file_path, sep=r'\s+|,', header=None, engine='python', on_bad_lines='skip', skipinitialspace=True)
     except Exception as e:
         print(f"Error reading {file_path}: {e}")
         return None, next_sid

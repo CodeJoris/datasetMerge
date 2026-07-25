@@ -53,13 +53,14 @@ def main(data_path: Path = DATA_PATH, output_path: Path = OUTPUT_PATH) -> None:
         print("Concatenating final dataset...")
         final_df = pd.concat(all_subjects_data, ignore_index=True)
 
-        time_series = final_df.groupby(['sid', 'trial_no'])['PacketCounter'].transform(lambda x: (x - x.min()) * 10)
+        time_series = final_df.groupby(['sid', 'trial_no'])['packetcounter'].transform(lambda x: (x - x.min()) * 10)
         final_df.insert(0, 'time_ms', time_series)
+        final_df.columns = [str(column).lower() for column in final_df.columns]
 
         # Ensure output directory exists before saving
         output_path.mkdir(parents=True, exist_ok=True)
         
-        final_df.to_csv(output_path / "luo.csv", index=False)
+        final_df.to_csv(output_path / "luo.csv", index=False, na_rep='')
         print(f"Successfully saved concatenated dataset to {output_path / 'luo.csv'}")
     else:
         print("No data was processed.")
@@ -100,7 +101,7 @@ def process_subject(sid: int, paths: list[Path]) -> pd.DataFrame:
             # Enforce linear time increase by reindexing over the full packet range
             min_packet = merged_df.index.min()
             max_packet = merged_df.index.max()
-            full_packet_range = pd.Index(range(min_packet, max_packet + 1), name="PacketCounter")
+            full_packet_range = pd.Index(range(min_packet, max_packet + 1), name="packetcounter")
             
             # This fills missing packets in the sequence with NaNs
             merged_df = merged_df.reindex(full_packet_range).reset_index()
@@ -154,20 +155,19 @@ def process_sensor_file(path: Path) -> pd.DataFrame:
     pd.DataFrame
         A cleaned dataframe indexed by PacketCounter, ready for merging.
     '''
-    df = pd.read_csv(path, engine='python', on_bad_lines='skip')
+    df = pd.read_csv(path, engine='python', on_bad_lines='skip', skipinitialspace=True)
+    df.columns = df.columns.str.strip().str.lower()
     loc = get_location(path.name)
 
-    df.columns = df.columns.str.strip()
-
-    if "SampleTimeFine" in df.columns:
-        df = df.drop(columns=["SampleTimeFine"])
+    if "sampletimefine" in df.columns:
+        df = df.drop(columns=["sampletimefine"])
 
     rename_mapping = {
-        col: f"{loc}_{col}" for col in df.columns if col != "PacketCounter"
+        col: f"{loc}_{col}" for col in df.columns if col != "packetcounter"
     }
     df = df.rename(columns=rename_mapping)
     
-    return df.set_index("PacketCounter")
+    return df.set_index("packetcounter")
 
 def get_sid(file_path: Path) -> int:
     '''
@@ -284,7 +284,7 @@ def append_missing_subjects(missing_sids: list[int], data_path: Path, output_fil
             subject_df = subject_df.reindex(columns=existing_columns)
             
             # 3. Now it is safe to append
-            subject_df.to_csv(output_file, mode='a', index=False, header=False)
+            subject_df.to_csv(output_file, mode='a', index=False, header=False, na_rep='')
             print(f"Subject {sid} successfully added!")
 
 def rename_csv_column(input_file: Path, output_file: Path, old_name: str, new_name: str) -> None:

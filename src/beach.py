@@ -42,9 +42,10 @@ def process_subject(file_path: Path) -> pd.DataFrame:
     for sensor in sensors:
         if sensor in data and isinstance(data[sensor], pd.DataFrame):
             sensor_df = data[sensor].copy()
+            sensor_df.columns = sensor_df.columns.str.strip().str.lower()
             
-            sensor_df['DateTime'] = sensor_df['DateTime'].dt.round('10ms')
-            sensor_df = sensor_df.groupby('DateTime', as_index=False).mean()
+            sensor_df['datetime'] = sensor_df['datetime'].dt.round('10ms')
+            sensor_df = sensor_df.groupby('datetime', as_index=False).mean()
             
             sensor_df = sensor_df.rename(columns={
                 'x': f'{sensor}_Acc_x',
@@ -55,31 +56,31 @@ def process_subject(file_path: Path) -> pd.DataFrame:
             if merged_df is None:
                 merged_df = sensor_df
             else:
-                merged_df = pd.merge(merged_df, sensor_df, on='DateTime', how='outer')
+                merged_df = pd.merge(merged_df, sensor_df, on='datetime', how='outer')
     
     if merged_df is not None and not merged_df.empty:
-        merged_df = merged_df.sort_values('DateTime').reset_index(drop=True)
+        merged_df = merged_df.sort_values('datetime').reset_index(drop=True)
         
         # --- NEW LOGIC: Enforce linear time increase and fill missing with NaNs ---
-        min_time = merged_df['DateTime'].min()
-        max_time = merged_df['DateTime'].max()
+        min_time = merged_df['datetime'].min()
+        max_time = merged_df['datetime'].max()
         
         # Create a uniform time index with strict 10ms steps (linear time increase)
         uniform_time_idx = pd.date_range(start=min_time, end=max_time, freq='10ms')
         
         # Reindex the dataframe to the uniform timeline. 
         # Missing packets naturally become NaNs here.
-        merged_df = merged_df.set_index('DateTime').reindex(uniform_time_idx)
+        merged_df = merged_df.set_index('datetime').reindex(uniform_time_idx)
         
-        # Restore DateTime column
-        merged_df.index.name = 'DateTime'
+        # Restore datetime column
+        merged_df.index.name = 'datetime'
         merged_df = merged_df.reset_index()
         # --------------------------------------------------------------------------
         
-        accel_cols = [c for c in merged_df.columns if c != 'DateTime']
+        accel_cols = [c for c in merged_df.columns if c != 'datetime']
         
-        # Convert DateTime to relative time_ms
-        merged_df = merged_df.rename(columns={'DateTime': 'time_ms'})
+        # Convert datetime to relative time_ms
+        merged_df = merged_df.rename(columns={'datetime': 'time_ms'})
         min_time_val = merged_df['time_ms'].min()
         merged_df['time_ms'] = (merged_df['time_ms'] - min_time_val).dt.total_seconds() * 1000
         merged_df['time_ms'] = merged_df['time_ms'].astype(int)
@@ -89,6 +90,7 @@ def process_subject(file_path: Path) -> pd.DataFrame:
         
         metadata_cols = ['time_ms', 'sid', 'surface']
         merged_df = merged_df[metadata_cols + accel_cols]
+        merged_df.columns = [str(column).lower() for column in merged_df.columns]
         
     return merged_df
 
@@ -126,7 +128,7 @@ def main(file_paths: list[Path], output_path: Path):
         final_df = final_df[metadata_cols + accel_cols]
         
         print(f"Exporting to {out_file}...")
-        final_df.to_csv(out_file, index=False)
+        final_df.to_csv(out_file, index=False, na_rep='')
         print("Export complete!")
     else:
         print("No data was processed.")

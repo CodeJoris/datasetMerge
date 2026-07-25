@@ -37,6 +37,7 @@ def process_subject(file_name: Path) -> pd.DataFrame:
     '''
     # Read the data file
     df = pd.read_csv(file_name)
+    df.columns = df.columns.str.lower()
     
     # Extract ID and generate surface mappings
     df['sid'] = get_id(file_name)
