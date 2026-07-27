@@ -51,7 +51,7 @@ def process_subject(file_name: Path) -> pd.DataFrame:
     
     # Reorder columns to place time, subject_id, and surface first
     accel_cols = [col for col in df.columns if col not in ['time_ms', 'sid', 'surface']]
-    df[accel_cols] = df[accel_cols] * g  # Convert acceleration from g to m/s^2
+    df[accel_cols] = df[accel_cols].apply(pd.to_numeric, errors='coerce') * g  # Convert acceleration from g to m/s^2
     ordered_cols = ['time_ms', 'sid', 'surface'] + accel_cols
     
     return df[ordered_cols]
