@@ -1,6 +1,7 @@
 datasets:
   luo:
-    link: "https://springernature.figshare.com/collections/A_database_of_human_gait_performance_on_irregular_and_uneven_surfaces_collected_by_wearable_sensors/4892463"
+    article_link: "https://doi.org/10.1038/s41597-020-0563-y"
+    data_link: "https://springernature.figshare.com/collections/A_database_of_human_gait_performance_on_irregular_and_uneven_surfaces_collected_by_wearable_sensors/4892463"
     path: "datasets/luo"
     delimiter: ","
     coupling_column: "PacketCounter"
@@ -8,8 +9,9 @@ datasets:
     surface_labeling: "file_name"
     metrics: ['acc', 'freeacc', 'gyr', 'mag', 'VelInc', 'oriinc (q0-q3)', 'roll', 'pitch', 'yaw', 'latitude', 'longitude', 'altitude', 'vel']
     locations: ['trunk', 'right_wrist', 'right_thigh', 'left_thigh', 'right_shank', 'left_shank']
-    acc_unit: "g"
+    acc_unit: "m/s^2"
     gyro_unit: "rad/s"
+    converted: True
     # Grouping these makes iteration in Python a single loop
     surface_mappings:
       calibration: [1, 2, 3]
@@ -34,20 +36,29 @@ datasets:
     locations: ['left_hip', 'left_wrist', 'right_ankle', 'left_ankle']
     metrics: ['acc']
     acc_unit: "g"
-    link: "https://physionet.org/content/accelerometry-walk-climb-drive/1.0.0/"
+    converted: True
+    article_link: "https://physionet.org/content/accelerometry-walk-climb-drive/1.0.0/"
+    data_link: "https://physionet.org/content/accelerometry-walk-climb-drive/1.0.0/"
     fs: 100
   bruno:
-    link: "https://archive.ics.uci.edu/dataset/283/dataset+for+adl+recognition+with+wrist+worn+accelerometer"
+    data_link: "https://archive.ics.uci.edu/dataset/283/dataset+for+adl+recognition+with+wrist+worn+accelerometer"
     locations: ['right_wrist']
     metrics: ['acc']
+    acc_unit: "int6"
+    conversion: "-1.5g + (coded_val/63)*3g"
+    converted: True
     fs: 32
   beach:
     locations: ['right_foot', 'left_wrist', 'left_foot', 'left_lower', 'right_wrist', 'right_lower', 'left_upper', 'right_upper']
-    metrics: ['acc', 'gyr', 'mag']
+    metrics: ['acc']
     acc_unit: "g"
-    link: "https://data.mendeley.com/datasets/5rrxw7y5bj/1"
+    data_link: "https://data.mendeley.com/datasets/5rrxw7y5bj/1"
+    article_link: "http://doi.org/10.1109/ACCESS.2020.3037952"
     fs: 100
+    converted: True
   hugadb:
+    article_link: "https://link.springer.com/chapter/10.1007/978-3-319-73013-4_12"
+    data_link: "https://www.dropbox.com/scl/fi/jsq0mr26rthrzy64vkkjc/HuGaDB-v2.zip?rlkey=101j8lvdktdejm105cf9fpisi&e=1&dl=0"
     fs: 58.8
     metrics: ['acc', 'gyr', 'emg']
     locations: ['right_foot', 'right_thigh', 'left_foot', 'right_shank', 'left_shank', 'left_thigh']
@@ -55,3 +66,10 @@ datasets:
     gyro_unit: "int16"
     acc_conversion: "2g/32768"
     gyro_conversion: "2000*pi/32768*180"
+    converted: True
+  mhealth:
+    article_link: "https://api.semanticscholar.org/CorpusID:9757468"
+    data_link: "https://archive.ics.uci.edu/dataset/319/mhealth+dataset"
+    fs: 50
+    acc_unit: "m/s^2"
+    gyro_unit: "deg/s"
