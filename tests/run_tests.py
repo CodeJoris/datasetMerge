@@ -59,9 +59,22 @@ def main() -> int:
         print("No datasets found in outputs/.")
         return 1
 
+    # Check if the tests have already been run and if the outputs are up to date
+    datasets_ran = []
+    for script_path in scripts:
+        for dataset_path in datasets:
+            output_path = TESTS_DIR / script_path.stem / f"{dataset_path.stem}.txt"
+            if output_path.exists():
+                datasets_ran.append((script_path, dataset_path))
+            else:
+                break
+
     overall_status = 0
     for script_path in scripts:
         for dataset_path in datasets:
+            if (script_path, dataset_path) in datasets_ran:
+                print(f"Skipping {script_path.name} on {dataset_path.name} (already ran)")
+                continue
             print(f"Running {script_path.name} on {dataset_path.name}...")
             return_code, output = run_test_script(script_path, dataset_path)
             output_path = write_output(script_path, dataset_path, output)
