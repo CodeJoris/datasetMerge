@@ -84,7 +84,7 @@ def main(file_paths: list[Path], output_path: Path):
         print(f"Data successfully merged and saved to {out_file}")
 
 if __name__ == "__main__":
-    DATA_PATH = Path(__file__).parent.parent / 'datasets' / 'karas1' / 'data'
+    DATA_PATH = Path(__file__).parent.parent / 'datasets' / 'karas' / 'data'
     OUTPUT_PATH = Path(__file__).parent.parent / 'outputs' 
     files = list(DATA_PATH.rglob("*.csv"))
 

@@ -208,7 +208,7 @@ def process_bruno_dataset(base_dir, output_csv):
 
 if __name__ == "__main__":
     # Target directories
-    dataset_dir = Path(__file__).parent.parent / 'datasets' / 'bruno1'
+    dataset_dir = Path(__file__).parent.parent / 'datasets' / 'bruno'
     output_filename = Path(__file__).parent.parent / 'outputs' / 'bruno.csv'
     
     # Ensure the output directory exists before saving

@@ -137,7 +137,7 @@ def main(file_paths: list[Path], output_path: Path):
         print("No data was processed.")
 
 if __name__ == "__main__":
-    DATA_PATH = Path(__file__).parent.parent / 'datasets' / 'beach1'
+    DATA_PATH = Path(__file__).parent.parent / 'datasets' / 'beach'
     OUTPUT_PATH = Path(__file__).parent.parent / 'outputs' 
     files = list(DATA_PATH.rglob("*.pkl"))
 

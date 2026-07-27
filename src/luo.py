@@ -12,7 +12,7 @@ Acc_Y : in the medio-lateral direction (w/gravity)
 Acc_Z : in the anterior-posterior direction (w/gravity)
 '''
 
-DATA_PATH = Path(__file__).parent.parent / "datasets" / "luo1"
+DATA_PATH = Path(__file__).parent.parent / "datasets" / "luo"
 OUTPUT_PATH = Path(__file__).parent.parent / "outputs"
 
 
