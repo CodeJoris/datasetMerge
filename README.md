@@ -29,6 +29,7 @@ Base column meanings:
 * **`sid`**: integer subject or session identifier assigned by the loader. This is used to keep data from different people or sessions separate.
 * **`surface`**: standardized activity label for the recording, using the dataset-specific mapping shown below.
 * **`trial_no`**: integer trial or file number. This appears only when the source dataset is naturally split into multiple trials for the same subject and activity. In this project, that applies to the Luo and HuGaDB outputs.
+* **`data columns`**: Accelerometer and gyroscope data are converted to `m/s^2` and `rads/s` respectively
 
 ## Datasets
 
