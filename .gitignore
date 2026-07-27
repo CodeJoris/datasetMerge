@@ -7,3 +7,5 @@ tests/__pycache__/
 tests/column_test/
 tests/nan_test/
 tests/linearity_test/
+tests/metrics_test/
+tests/location_test/
