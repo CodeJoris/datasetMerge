@@ -1,3 +1,12 @@
+"""
+Karas Dataset Merge Script
+    - Sensor locations : ['left_hip', 'left_wrist', 'right_ankle', 'left_ankle']
+    - Sensor types : ['acc']
+    - units : ['g']
+    - Conversion line : line 63
+    - Output units : ['m/s^2']
+"""
+
 import pandas as pd
 import numpy as np
 from pathlib import Path
@@ -66,7 +75,7 @@ def main(file_paths: list[Path], output_path: Path):
     time_ms, subject_id, surface, all acceleration data
     '''    
     dataframes = []
-    # Use multiprocessing to parse files concurrently[cite: 1]
+    # Use multiprocessing to parse files concurrently
     with concurrent.futures.ProcessPoolExecutor() as executor:
         results = executor.map(process_subject, file_paths)
         dataframes = list(results)
@@ -78,7 +87,7 @@ def main(file_paths: list[Path], output_path: Path):
         # Ensure the output directory exists
         output_path.mkdir(parents=True, exist_ok=True)
         
-        # Write to csv[cite: 1]
+        # Write to csv
         out_file = output_path / 'karas.csv'
         merged_df.to_csv(out_file, index=False)
         print(f"Data successfully merged and saved to {out_file}")
