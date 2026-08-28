@@ -1,3 +1,12 @@
+"""
+Luo Dataset Merge Script
+    - locations: ['trunk', 'right_wrist', 'right_thigh', 'left_thigh', 'right_shank', 'left_shank']
+    - metrics: ['acc', 'freeacc', 'gyr', 'mag', 'VelInc', 'oriinc (q0-q3)', 'roll', 'pitch', 'yaw', 'latitude', 'longitude', 'altitude', 'vel']
+    - units: ['m/s^2', 'rads/s', ...]
+    - Conversion line: Already in m/s^2 and rad/s, no conversion needed
+    - Output units: ['m/s^2', 'rad/s', 'local', 'mV']
+"""
+
 import os, glob
 import pandas as pd
 import concurrent.futures

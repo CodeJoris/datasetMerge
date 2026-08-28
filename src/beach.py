@@ -1,3 +1,12 @@
+"""
+Beach Dataset Merge Script
+    - Sensor locations: ['right_foot', 'left_wrist', 'left_foot', 'left_lower', 'right_wrist', 'right_lower', 'left_upper', 'right_upper']
+    - Metrics: ['acc']
+    - Units: ['g']
+    - Conversion line: line 104
+    - Output units: ['m/s^2']
+"""
+
 import pandas as pd
 import numpy as np
 from pathlib import Path
@@ -77,8 +86,7 @@ def process_subject(file_path: Path) -> pd.DataFrame:
         # Restore datetime column
         merged_df.index.name = 'datetime'
         merged_df = merged_df.reset_index()
-        # --------------------------------------------------------------------------
-        # Convert to m/s^2 if the original data is in g
+
         accel_cols = [c for c in merged_df.columns if c != 'datetime'] 
         
         # Convert datetime to relative time_ms
@@ -92,6 +100,7 @@ def process_subject(file_path: Path) -> pd.DataFrame:
         
         metadata_cols = ['time_ms', 'sid', 'surface']
         merged_df = merged_df[metadata_cols + accel_cols]
+        # Convert to m/s^2 if the original data is in g
         merged_df[accel_cols] = merged_df[accel_cols].apply(pd.to_numeric, errors='coerce') * G_TO_MS2
         merged_df.columns = [str(column).lower() for column in merged_df.columns]
         

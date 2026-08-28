@@ -1,10 +1,19 @@
+"""
+HuGaDB Dataset Merge Script
+    - locations: ['right_foot', 'right_thigh', 'left_foot', 'right_shank', 'left_shank', 'left_thigh']
+    - metrics: ['acc', 'gyr', 'emg']
+    - units: ['int_16', 'int_16', 'uint_8']
+    - Conversion line: line 156 
+    - Output units: ['m/s^2', 'rad/s', 'uint_8']    
+"""
+
 import pandas as pd
 import numpy as np
 from pathlib import Path
 from typing import List
 
 # Standard columns updated to the {sensor_loc}_{Metric}_{x/y/z} convention.
-# The main data body of every file has 39 columns in a fixed order[cite: 2].
+# The main data body of every file has 39 columns in a fixed order.
 HUGADB_COLUMNS = [
     'right_foot_acc_x', 'right_foot_acc_y', 'right_foot_acc_z', 'right_foot_gyr_x', 'right_foot_gyr_y', 'right_foot_gyr_z',
     'right_shank_acc_x', 'right_shank_acc_y', 'right_shank_acc_z', 'right_shank_gyr_x', 'right_shank_gyr_y', 'right_shank_gyr_z',
@@ -35,8 +44,8 @@ def convert_units(df: pd.DataFrame) -> pd.DataFrame:
     """
     Converts raw 16-bit integer sensor data to physical units.
     
-    Accelerometers are scaled from -2g to 2g, and gyroscopes from -2000 to 2000 deg/sec[cite: 2].
-    Values are encoded as int16 datatypes (-32768 to 32767)[cite: 2].
+    Accelerometers are scaled from -2g to 2g, and gyroscopes from -2000 to 2000 deg/sec.
+    Values are encoded as int16 datatypes (-32768 to 32767).
     This function converts accelerometer values to m/s^2 and gyroscope values to rad/s.
     
     Parameters:
@@ -106,8 +115,8 @@ def parse_hugadb_file(filepath: Path) -> pd.DataFrame:
     Reads a single HuGaDB text file, appends standardized base columns, extracts 
     metadata from the filename, scales unit types, and enforces a linear packet sequence.
 
-    The file naming convention follows HGD_vX_ACT_PR_CNT.txt[cite: 2]. Lines beginning 
-    with '#' are treated as headers and skipped[cite: 2].
+    The file naming convention follows HGD_vX_ACT_PR_CNT.txt. Lines beginning 
+    with '#' are treated as headers and skipped.
 
     Parameters:
         filepath (Path): The Path object pointing to the specific .txt file.
@@ -119,7 +128,7 @@ def parse_hugadb_file(filepath: Path) -> pd.DataFrame:
     filename_no_ext = filepath.stem
     parts = filename_no_ext.split('_')
     
-    # Extract participant ID (PR) and trial number (CNT) based on the file template[cite: 2]
+    # Extract participant ID (PR) and trial number (CNT) based on the file template
     trial_no = int(parts[-1])
     sid = int(parts[-2])
     

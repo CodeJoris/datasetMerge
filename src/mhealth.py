@@ -1,34 +1,43 @@
+"""
+mHealth Dataset Merge Script
+    - locations: ['chest', 'left_ankle', 'right_lower'] right_lower is the right lower arm
+    - metrics: ['acc', 'gyr', 'mag', 'ecg']
+    - units: ['m/s^2', 'deg/s', 'local', 'mV']
+    - Conversion line: line 45
+    - Output units: ['m/s^2', 'rad/s', 'local', 'mV']
+"""
+
 import pandas as pd
 import numpy as np
 from pathlib import Path
 
-# Base paths for the dataset structure[cite: 4]
+# Base paths for the dataset structure
 DATA_PATH = Path(__file__).parent.parent / "datasets" / "mhealth"
 OUTPUT_PATH = Path(__file__).parent.parent / "outputs"
 OUTPUT_FILE = OUTPUT_PATH / "mhealth.csv"
 
-# Dataset-specific constants[cite: 1]
+# Dataset-specific constants
 SAMPLING_RATE_HZ = 50
 TIME_INTERVAL_MS = int((1.0 / SAMPLING_RATE_HZ) * 1000)
 
-# Activity mapping to align with README conventions[cite: 1, 5]
+# Activity mapping to align with README conventions
 ACTIVITY_MAP = {
-    0: 'non-study activity',     # Null class[cite: 1] mapped to Karas convention[cite: 5]
-    1: 'standing',               # Standing still[cite: 1] mapped to HuGaDB convention[cite: 5]
-    2: 'sitting',                # Sitting and relaxing[cite: 1] mapped to HuGaDB convention[cite: 5]
-    3: 'lying_down',             # Lying down[cite: 1]
-    4: 'flat',                   # Walking[cite: 1] mapped to flat (like Bruno dataset)[cite: 5]
-    5: 'stairs_up',              # Climbing stairs[cite: 1] mapped to stairs_up[cite: 5]
-    6: 'waist_bends_forward',    # Waist bends forward[cite: 1]
-    7: 'frontal_elevation_arms', # Frontal elevation of arms[cite: 1]
-    8: 'knees_bending',          # Knees bending (crouching)[cite: 1]
-    9: 'bicycling',              # Cycling[cite: 1] mapped to bicycling[cite: 5]
-    10: 'jogging',               # Jogging[cite: 1]
-    11: 'running',               # Running[cite: 1] mapped to HuGaDB convention[cite: 5]
-    12: 'jump_front_back'        # Jump front & back[cite: 1]
+    0: 'non-study activity',     # Null class mapped to Karas convention
+    1: 'standing',               # Standing still mapped to HuGaDB convention
+    2: 'sitting',                # Sitting and relaxing mapped to HuGaDB convention
+    3: 'lying_down',             # Lying down
+    4: 'flat',                   # Walking mapped to flat (like Bruno dataset)
+    5: 'stairs_up',              # Climbing stairs mapped to stairs_up
+    6: 'waist_bends_forward',    # Waist bends forward
+    7: 'frontal_elevation_arms', # Frontal elevation of arms
+    8: 'knees_bending',          # Knees bending (crouching)
+    9: 'bicycling',              # Cycling mapped to bicycling
+    10: 'jogging',               # Jogging
+    11: 'running',               # Running mapped to HuGaDB convention
+    12: 'jump_front_back'        # Jump front & back
 }
 
-# Column names applying the naming convention from the README[cite: 5]
+# Column names applying the naming convention from the README
 COLUMN_NAMES = [
     'chest_acc_x', 'chest_acc_y', 'chest_acc_z',               
     'chest_ecg_1', 'chest_ecg_2',                              
@@ -53,14 +62,14 @@ def load_and_format_trial(file_path: Path, sid: int) -> pd.DataFrame:
     Returns:
         pd.DataFrame: Formatted dataframe structured with `time_ms`, `sid`, `surface` first.
     """
-    # Load the raw tab-separated values[cite: 3]
+    # Load the raw tab-separated values
     df = pd.read_csv(file_path, sep='\t', header=None, names=COLUMN_NAMES)
     
-    # Map the integer labels to the string conventions[cite: 1, 5]
+    # Map the integer labels to the string conventions
     df['surface'] = df['surface'].map(ACTIVITY_MAP)
     
     # 1. Enforce Linear Time Increase & Fill Missing Packets
-    # The dataset is 50Hz, so we generate a strict 20ms timedelta index[cite: 1]
+    # The dataset is 50Hz, so we generate a strict 20ms timedelta index
     df['time'] = pd.to_timedelta(df.index * TIME_INTERVAL_MS, unit='ms')
     df.set_index('time', inplace=True)
     
@@ -68,23 +77,23 @@ def load_and_format_trial(file_path: Path, sid: int) -> pd.DataFrame:
     expected_freq = f"{TIME_INTERVAL_MS}ms"
     df = df.resample(expected_freq).asfreq()
     
-    # Reset the index to generate the required `time_ms` column[cite: 5]
+    # Reset the index to generate the required `time_ms` column
     df.reset_index(inplace=True)
     df['time_ms'] = (df['time'].dt.total_seconds() * 1000).astype(int)
     
     # 2. Re-assign Subject ID (sid) and Forward-fill metadata 
-    # (Since resampling introduces NaNs, we ensure sid and surface metadata persists)[cite: 5]
+    # (Since resampling introduces NaNs, we ensure sid and surface metadata persists)
     df['sid'] = sid
     df['surface'] = df['surface'].ffill()
     
     # 3. Convert Units
-    # Acceleration is natively in m/s^2[cite: 1]
-    # Gyroscope data is in deg/s and must be converted to rad/s[cite: 1]
+    # Acceleration is natively in m/s^2
+    # Gyroscope data is in deg/s and must be converted to rad/s
     gyro_cols = [col for col in df.columns if 'gyr' in col]
     df[gyro_cols] = df[gyro_cols] * (np.pi / 180.0)
     
     # 4. Reorder Columns
-    # First columns must strictly be time_ms, sid, surface followed by the data[cite: 5]
+    # First columns must strictly be time_ms, sid, surface followed by the data
     data_cols = [c for c in COLUMN_NAMES if c != 'surface']
     final_cols = ['time_ms', 'sid', 'surface'] + data_cols
     
@@ -104,7 +113,7 @@ def build_dataset_merger(data_dir: Path, output_filepath: Path):
     # Ensure the output directory exists
     output_filepath.parent.mkdir(parents=True, exist_ok=True)
     
-    # Iterate through subject files 1 to 10 as structured in the dataset tree[cite: 2]
+    # Iterate through subject files 1 to 10 as structured in the dataset tree
     for sid in range(1, 11):
         file_name = f"mHealth_subject{sid}.log"
         file_path = data_dir / file_name

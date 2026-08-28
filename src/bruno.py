@@ -1,3 +1,12 @@
+"""
+Bruno Dataset Merge Script
+    - Sensor locations : ['right_wrist']
+    - Metrics : ['acc']
+    - Units : ['int6']
+    - Conversion line : line 166
+    - Output units : ['m/s^2']
+"""
+
 from importlib.resources import path
 import os
 import pandas as pd
