@@ -18,7 +18,7 @@ def check_nans_in_chunks(file_path: Path, chunksize: int = 500000, context_windo
     and prints small contextual sections around rows containing NaNs.
 
     Parameters:
-    - file_path: Path object pointing to the CSV file[cite: 7].
+    - file_path: Path object pointing to the CSV file.
     - chunksize: Integer, number of rows to load into memory per chunk. 
                  Keeps RAM usage low for multi-gigabyte files.
     - context_window: Integer, number of rows to display before and after the NaN row.
@@ -35,7 +35,7 @@ def check_nans_in_chunks(file_path: Path, chunksize: int = 500000, context_windo
     has_nans = False
     
     try:
-        # Load the data per chunks to handle large files[cite: 7]
+        # Load the data per chunks to handle large files
         for chunk_idx, chunk in enumerate(pd.read_csv(file_path, chunksize=chunksize)):
             total_rows += len(chunk)
             
@@ -88,7 +88,7 @@ def check_nans_in_chunks(file_path: Path, chunksize: int = 500000, context_windo
 
 # --- Execution ---
 if __name__ == "__main__":
-    # Define dataset paths[cite: 7]
+    # Define dataset paths
     beach_path = resolve_dataset_path("beach.csv")
     bruno_path = resolve_dataset_path("bruno.csv")
     hugadb_path = resolve_dataset_path("hugadb.csv")

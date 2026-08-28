@@ -66,7 +66,7 @@ def check_time_linearity(time_ms, sid, fs, trials=None, sort_first=False, tolera
     """
     results = {}
     
-    # Drop NaNs if they exist to prevent diff calculation errors[cite: 2]
+    # Drop NaNs if they exist to prevent diff calculation errors
     valid_mask = ~np.isnan(time_ms)
     time_ms = time_ms[valid_mask]
     sid = sid[valid_mask]

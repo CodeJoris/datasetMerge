@@ -34,7 +34,7 @@ def print_columns(file_path: Path):
 
 # --- Execution ---
 if __name__ == "__main__":
-    # Define dataset paths[cite: 7]
+    # Define dataset paths
     beach_path = resolve_dataset_path("beach.csv")
     bruno_path = resolve_dataset_path("bruno.csv")
     hugadb_path = resolve_dataset_path("hugadb.csv")
